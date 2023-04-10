@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+
+    <meta name="theme-color" content="lightgoldenrodyellow">
+    <meta name="theme-color" content="lightgoldenrodyellow" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="lightgoldenrodyellow" media="(prefers-color-scheme: dark)">
+	
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+	<meta name="viewport" content="minimal-ui">
+	<meta name="viewport" content="initial-scale=1"> 
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
+	<meta name="mobile-web-app-capable" content="yes">
+	<link rel="manifest" href="/app.webmanifest">
+
+    <style>
+		:root {
+			/* blue goofy theme
+			--input-padding: .5rem 1.5rem;
+			--input-background: cornflowerblue;
+			--input-weight: 500;
+			--input-size: 1.1rem;
+			--input-color: white;
+			--background: lightgoldenrodyellow;
+			*/
+		  
+			/* gray serious theme */
+			--input-padding: .7rem 1rem .8rem 1rem;
+			--input-background: #fafafa;
+			--input-weight: 490;
+			--input-size: 0.85rem;
+			--input-color: black;
+			--background: white;
+		}
+	
+		body::-webkit-scrollbar{
+			display: none;
+		}
+		textarea::-webkit-scrollbar{
+			display: none;
+		}
+	
+        .todo-input {
+        }
+
+        .btn-primary {
+            background-color: #b1c9fe;
+            border-color: #b1c9fe;
+            color: #438594;
+        }
+
+        .ios-peek {
+            position: fixed;
+            z-index: -1;
+            bottom: 0;
+            left: 0;
+            background: var(--background);
+            height: 100vh;
+            width: 100vw;
+        }
+
+        textarea {
+            height: 200px;
+        }
+		
+		.form-control {
+			padding: var(--input-padding);
+			font-size: var(--input-size);
+			font-weight: var(--input-weight);
+			color: var(--input-color);
+			background-color: var(--input-background);
+			border: none;
+			border-radius: .55rem;
+			transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+
+			box-shadow: 0 0 0 0.03rem gray;
+		}
+		
+		.heading {
+			font-weight: bold;
+		}
+		
+		.textarea-highlighter {
+			height: 33px;
+			background: red;
+			z-index: 99999999;
+			margin-bottom: -33px;
+			position: relative;
+			mix-blend-mode: plus-lighter;
+		}
+		
+		.project-highlighter {
+			height: 44px;
+			position: absolute;
+			width: 44px;
+			background: red;
+			mix-blend-mode: color;
+		}
+		
+		.form-control:focus {
+			border-color: black;
+			box-shadow: 0 0 0 0.2rem black;
+		}
+		
+		.pill {
+			background-color: hsl(55.97678738185304, 70%, 50%);
+			color: black;
+			mix-blend-mode: hard-light;
+			backdrop-filter: blur(3px);
+			padding-bottom: 3px;
+			padding-bottom: 5px;
+			box-shadow: 0.1rem .1rem 0.3rem 0.0em rgba(var(--bs-body-color-rgb), 0.3);
+		}
+		
+
+
+    </style>
+
+    <title>ToolDo</title>
+</head>
+<body style="background: var(--background);">
+
+
+
+    <div class="container mt-3 mt-xl-5 mb-5">
+        <div class="row">
+            <div class="col-12 offset-md-1 col-md-10 offset-lg-0 col-lg-6 col-xxl-4 offset-xxl-1 mb-3 d-none">
+                <p class="heading">| Projects</p>
+                <div id="project-list" class="mb-2">
+                    <input class="form-control mb-2 project-input" type="text">
+                    <input class="form-control mb-2 project-input" type="text">
+                    <input class="form-control mb-2 project-input" type="text">
+                    <input class="form-control mb-2 project-input" type="text">
+                    <input class="form-control mb-2 project-input" type="text">
+                </div>
+                <div class="mb-2 text-center">
+                    <button class="fw-bold pb-3 border-0 bg-transparent" onclick="addProject();">+ Add Project</button>
+                </div>
+            </div>
+            <div class="col-12 offset-md-1 col-md-10 offset-lg-0 col-lg-6 col-xxl-4 offset-xxl-4 mb-3">
+				<div class="d-flex justify-content-between">
+					<p class="heading mb-3" contenteditable>| Patrick's List <span class="badge pill">hello there</span></p>
+					<div class="form-check form-switch">
+						  <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" onclick="switchSort();">
+						  <label class="form-check-label" for="flexSwitchCheckDefault">sort by time</label>
+					</div>
+				</div>
+                <div id="list">
+                    <div class="form-control mb-2 todo-input" contenteditable></div>
+                    <div class="form-control mb-2 todo-input" contenteditable></div>
+                    <div class="form-control mb-2 todo-input" contenteditable></div>
+                    <div class="form-control mb-2 todo-input" contenteditable></div>
+                    <div class="form-control mb-2 todo-input" contenteditable></div>
+                    <div class="form-control mb-2 todo-input" contenteditable></div>
+                </div>
+                <div class="mb-2 text-center">
+                    <button class="fw-bold pb-3 border-0 bg-transparent mt-1" onclick="addTodo();"><img src="./logo.png" width="45px" /></button>               
+                </div>
+                <br class="d-none d-xxl-block">
+                <div class="d-none text-center fw-bold" id="count" style="color: white;">
+                    0
+                </div>
+                <br class="d-none d-xxl-block">
+                <div class="d-none" id="done">
+                    hwd DONE something...
+                </div>
+                <div class="d-none text-center fw-bold" id="countDone" style="color: white;">
+                    0
+                </div>
+            </div>
+            <div class="col-12 offset-md-1 col-md-10 offset-lg-0 col-lg-6 col-xxl-4 mb-3 d-none">
+                <p class="heading">| Breakdown</p>
+                <div id="breakdown-list">
+                    <textarea class="form-control mb-2 breakdown-input" type="text"></textarea>
+                    <textarea class="form-control mb-2 breakdown-input" type="text"></textarea>
+                </div>
+                <div class="mb-2 text-center">
+                    <button class="fw-bold pb-3 border-0 bg-transparent" onclick="addBreakdown();">+ Add Breakdown</button>
+                </div>
+            </div>
+        </div>
+
+
+        <br><br><br>
+
+        <button id="save-button"
+				class="btn btn-lg pt-2 pb-3 px-3 text-white position-fixed d-none"
+                style="
+					background-color: #00000055;
+					backdrop-filter: blur(5px);
+					box-shadow: .1rem .1rem 0.1rem 0px black!important;
+					right: 15px;
+					border-radius: 5px;
+					bottom: 15px;
+					z-index: 9;"
+                onclick="saveAll();">
+							
+			<svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-server" viewBox="0 0 16 16">
+			  <path d="M1.333 2.667C1.333 1.194 4.318 0 8 0s6.667 1.194 6.667 2.667V4c0 1.473-2.985 2.667-6.667 2.667S1.333 5.473 1.333 4V2.667z"/>
+			  <path d="M1.333 6.334v3C1.333 10.805 4.318 12 8 12s6.667-1.194 6.667-2.667V6.334a6.51 6.51 0 0 1-1.458.79C11.81 7.684 9.967 8 8 8c-1.966 0-3.809-.317-5.208-.876a6.508 6.508 0 0 1-1.458-.79z"/>
+			  <path d="M14.667 11.668a6.51 6.51 0 0 1-1.458.789c-1.4.56-3.242.876-5.21.876-1.966 0-3.809-.316-5.208-.876a6.51 6.51 0 0 1-1.458-.79v1.666C1.333 14.806 4.318 16 8 16s6.667-1.194 6.667-2.667v-1.665z"/>
+			</svg>
+				
+		</button>
+    </div>
+
+    <div class="ios-peek">
+    </div>
+
+</body>
+<!-- Option 1: Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+<script>
+
+	// TODO
+	// update render method to convert tags into pills
+	// make an "unrender" method to convert pills into tags. I could use an attribute to store the textual value!
+	//		but then when the actual content is edited... with contenteditable.... it still needs to work
+
+    let globalList = [];
+    let globalBreakdownList = [];
+    let globalProjectList = [];
+    let globalTodoCount = 0;
+    let globalDoneCount = 0;
+	let sortByTime = false;
+	
+	// other helpers
+	
+	// COLORS
+	const randomColor = () => {
+		let color = Math.floor(Math.random()*16777215).toString(16);
+		var zerofilled = ('0000'+color).slice(-6); // good stuff: https://stackoverflow.com/questions/1267283/how-can-i-pad-a-value-with-leading-zeros
+		
+		return zerofilled; // cause otherwise we end up with 4 digit colors that create transparency yadda yadda
+	};
+	const randomPopColor = () => {
+		let hue = (Math.random()*360).toString();
+		return "hsl(" + hue + ", 70%, 60%)"; // cause otherwise we end up with 4 digit colors that create transparency yadda yadda
+	}
+	const khromaColors = [[70,46,189],[142,103,232],[203,227,115],[175,213,232],[126,206,191],[88,224,81],[223,7,122],[235,252,181],[138,182,202],[22,119,180],[98,232,20],[66,168,98],[30,245,195],[218,33,153],[242,176,190],[23,130,253],[189,249,224],[69,120,115],[219,144,14],[194,236,157],[227,179,58],[61,216,128],[210,28,34],[193,140,25],[154,219,229],[12,85,127],[233,223,231],[183,193,75],[233,145,176],[140,251,192],[152,237,225],[232,126,96],[249,184,152],[200,201,99],[228,236,168],[198,226,20],[34,80,115],[190,148,232],[61,199,227],[190,233,225],[244,230,197],[254,230,77],[71,243,212],[13,186,224],[159,194,176],[164,251,157],[160,227,197],[246,196,32],[53,111,5],[119,175,169]];
+	/*const randomColor = () => {
+		const color = khromaColors[khromaColors.length * Math.random() | 0];
+		return color[0].toString(16) + color[1].toString(16) + color[2].toString(16);
+	};*/
+	// colors that work well for mix-blend-mode: color // Project stripes
+	const mixBlendColor = ["b94", "1cee", "153f", "838", "8c3", "6a4", "c778a6"];
+	// colors that work well for mix-blend-mode: hard-light // Task badges
+	const mixBlendHardLight = ["d4b", "39eb", "2f2d"];
+	// colors that work well for mix-blend-mode: plus-lighter // Breakdown stripes
+	const mixBlendplusLighter = ["14b5"];
+	
+
+	//templates
+	const todoTemplate = (name = "...", color = randomPopColor(), classes = "") => `
+		<div class="position-relative ${classes}">
+			<div class="form-control mb-2 todo-input" contenteditable spellcheck="false">${name} ${pillTemplate(color)}&nbsp;</div>
+		</div>`;
+		
+	const projectTemplate = (name = "", color = randomPopColor(), classes = "") => `
+		<div class="position-relative ${classes}">
+			<input class=\"form-control mb-2 project-input border-0 ${classes}\" type=\"text\"  value=\"${name}\" >
+			${pillTemplate(color)}
+		</div>`;
+		
+	const pillTemplate = (color = randomPopColor()) => `
+			<span class="badge pill" style="background-color: ` + color + `;">#important</span>
+	`;
+		
+	// switch the sorting
+	function switchSort() {
+		sortByTime = !sortByTime;
+		update(); // update display
+	}
+
+    async function getJSONdata() {
+        const request = new Request('https://api.npoint.io/09f00b9000d1a3a5902a', {method: 'GET'});
+
+        return await thatFetchStuff(request);
+    }
+
+    async function thatFetchStuff(request) {
+        let responseObject = "connection failed"; // default to error, will be replaced by data
+
+        await fetch(request)
+            .then(response => {
+                if (response.status === 200) {
+					console.log(response);
+                    return response.json();
+                } else {
+					console.log("response not 200");
+					return "result not 200";
+                    throw new Error('Something went wrong on api server!');
+                }
+            })
+            .then(response => {
+                responseObject = response;
+                // ...
+            }).catch(error => {
+				
+                console.error(error);
+            });
+
+        return responseObject;
+    }
+
+    async function main() {
+        let response = await getJSONdata();
+        globalList = response.list;
+        globalBreakdownList = response.breakdowns;
+        globalProjectList = response.projects;
+        scoreSortRender(); // because first we have to render only before we can scrape
+    }
+	
+	function update() {
+		scrapeData();
+		scoreSortRender();
+	}
+
+    function scoreSortRender(){
+        evaluateAll();
+        
+		if (sortByTime) {
+		console.log("sorting by time");
+			globalList = globalList.sort(compareTodoEstimate);
+		} else {
+			console.log("sorting by hwd");
+			globalList = globalList.sort(compareScore);
+		}
+		
+		globalProjectList = globalProjectList.sort(compareScore);
+        
+        renderAll();
+    }
+
+    /* was not really necessary, we now work with the globallist object
+    function convertToOnlyNames(objectList) {
+        let listOnlyNames = [];
+        for(let todo of objectList) {
+            listOnlyNames.push(todo.name);
+        }
+        return listOnlyNames;
+    }  */
+
+    function addTodo(){
+        let listDOM = document.getElementById('list');
+        let content = todoTemplate();
+        listDOM.insertAdjacentHTML('beforeend', content);
+    }
+
+    function addBreakdown() {
+        let listDOM = document.getElementById('breakdown-list');
+        let content = `<div class="textarea-highlighter"></div><textarea class=\"form-control mb-2 breakdown-input\" type=\"text\"></textarea>`;
+        listDOM.insertAdjacentHTML('beforeend', content);
+    }
+
+    function addProject() {
+        let listDOM = document.getElementById('project-list');
+        let content = projectTemplate();
+        listDOM.insertAdjacentHTML('beforeend', content);
+    }
+
+
+    async function renderTodos(filter = "") {
+        let listDOM = document.getElementById('list');
+        let listHTML = "";
+
+        let doneDOM = document.getElementById('done');
+        let doneHTML = "";
+		let classes = "";
+
+        for(let todo of globalList) {
+
+            if (todo.score < 0) {
+                doneHTML += "<p>" + todo.name + "</p>";
+            } else {
+				classes="";
+				if (filter != "" && !todo.name.includes(filter)) classes = "d-none";
+                listHTML += todoTemplate(todo.name, todo?.color, classes);
+            }
+
+        }
+
+        listDOM.innerHTML = listHTML;
+        doneDOM.innerHTML = doneHTML;
+
+        document.getElementById('count').innerHTML = globalTodoCount;
+        document.getElementById('countDone').innerHTML = globalDoneCount;
+    }
+
+    async function renderProjects(filter = "") {
+        let listDOM = document.getElementById('project-list');
+        let listHTML = "";
+		let classes = "";
+        for(let item of globalProjectList) {
+			classes="";
+			if (filter != "" && !item.name.includes(filter)) classes = "d-none";
+            listHTML += projectTemplate(item.name, item?.color, classes);
+        }
+        listDOM.innerHTML = listHTML;
+    }
+
+    async function renderAll(filter = "") {
+        renderTodos(filter);
+        renderProjects(filter);
+
+        let listDOM = document.getElementById('breakdown-list');
+        let listHTML = "";
+
+        for(let breakdown of globalBreakdownList) {
+            listHTML += `<div class="textarea-highlighter" style="background: #`+ randomColor() +`;"></div><textarea class=\"form-control mb-2 breakdown-input\" type=\"text\">` + breakdown + `</textarea>`;
+        }
+
+        listDOM.innerHTML = listHTML;
+    }
+	
+	/*
+	 * next evolutionary step to scoreTodos. evaluate all entities (projects, todos, ...) inside the current window
+	 * 
+	 */
+	function evaluateAll() {
+		scoreTodos();
+		calcTodoTime();
+		
+		scoreProjects();
+		
+		// applies to both projects and todos
+		getColors();
+	}
+	
+	/*
+     * newer feature: allow custom colors in order to show belonging to here or there
+     */
+    function getColors() {
+        for(let todo of globalList) { extractColorFromName(todo); }
+		for(let project of globalProjectList) { extractColorFromName(project); }
+    }
+	
+	// helper function getting colors
+	function extractColorFromName(item) {
+		let colorIndex, color;
+		colorIndex = item.name.indexOf("#");
+		if(colorIndex > -1) {
+			color = item.name.slice(colorIndex + 1, colorIndex + 7);
+			item.color = color;
+		} 
+	}
+	
+
+    /*
+     * assigns each ToDo a value in minutes based on the string after the priority describing the timeframe
+	 * e.g. 30m, 2h, 1-2h, ...
+     */
+    function calcTodoTime() {
+	
+		// get second word from name
+		// check if that word ends with m, h, d, w or m
+		// check if it starts with a number
+		// calculate the number of minutes contained in that expression
+		// if it fails at any point, just assign INTEGER MAX, so basically don't assign any time
+
+		// the conversion factors weeks, days, ...
+		// TODO really the greater units should build on smaller units, so w = 5d, m = 4w etc...
+        const factors = {
+			"m": 1,
+			"h": 60,
+			"d": 480, // now here's the tricky part, a day isn't 24 hours but more like a work day, so 8 hours
+			"w": 2400, // same as above, let's assume a fulltime work schedule
+			// and I guess months don't exist for now? but they should, for projects and what not
+		}
+		
+		
+
+        for(let todo of globalList) {
+		
+			try {
+			
+				const timeString = todo.name.split(' ')[1];
+				// at this point, we could have a time estimate at words[1] or nothing / a letter / a word
+				
+				const factor = factors[timeString.slice(-1)];
+				
+				let amount = timeString.slice(0,-1);
+				
+				// if it's a ballpark, then just make a middle average out of it
+				if (amount.includes("-")) {
+					const extremes = amount.split('-');
+					amount = (parseInt(extremes[1]) + parseInt(extremes[0])) / 2;
+				} 
+				
+				todo.estimate = amount * factor;
+			
+			
+			} catch (error) {
+				todo.estimate = Number.MAX_SAFE_INTEGER;
+			}
+
+        }
+    }
+	
+	
+    /*
+     * assigns each ToDo a score based on the first letters code
+     */
+    function scoreTodos() {
+
+        globalDoneCount = 0;
+        globalTodoCount = 0;
+
+        for(let todo of globalList) {
+
+            if(todo.name.includes("DONE")) {
+                todo.score = -1;
+                globalDoneCount++;
+            } else {
+                scoreItem(todo);
+                globalTodoCount++;
+            }
+        }
+    }
+	
+	/*
+     * assigns each project a score based on the first letters code
+     */
+    function scoreProjects() {
+        for(let project of globalProjectList) {
+			scoreItem(project);
+        }
+    }
+	
+	/*
+	 * helper to score any item with hwd code inside tring attribute "name"
+	 */
+	function scoreItem(item) {
+		let highImpact = item.name.charAt(0);
+		let importance = item.name.charAt(1);
+		let urgency = item.name.charAt(2);
+
+		if (highImpact != '-') {
+		highImpact = 100;
+		} else { highImpact = 0; }
+		if (importance != '-') {
+		importance = 10;
+		} else { importance = 0; }
+		if (urgency != '-') {
+		urgency = 1;
+		} else { urgency = 0; }
+
+		item.score = highImpact + importance + urgency;
+	}
+	 
+
+    function compareScore(a, b) {
+        return b.score - a.score;
+    }
+    function compareTodoEstimate(a, b) {
+        return b.estimate - a.estimate;
+    }
+
+    function getTodosFromInputs() {
+        const todoInputs = document.getElementsByClassName("todo-input");
+        const dones = document.getElementById("done").getElementsByTagName("p");
+        globalList = [];
+        for(let todo of todoInputs) {
+            if(todo.innerHTML.trim() != "") {
+				todo.innerHTML = todo.innerHTML.trim(); // 
+                globalList.push({name: todo.innerHTML});
+            }
+        }
+        for(let done of dones) {
+            if(done.innerHTML != "") {
+                globalList.push({name: done.innerHTML});
+            }
+        }
+    }
+
+    function getProjectsFromInputs() {
+        const inputs = document.getElementsByClassName("project-input");
+        globalProjectList = [];
+        for(let input of inputs) {
+            if(input.value != "") {
+                globalProjectList.push({name: input.value});
+            }
+        }
+    }
+
+    function scrapeData() {
+        getTodosFromInputs();
+		getProjectsFromInputs();
+
+        const breakdowns = document.getElementsByClassName("breakdown-input");
+        globalBreakdownList = [];
+        for(let breakdown of breakdowns) {
+            if(breakdown.value != "") {
+                globalBreakdownList.push(breakdown.value);
+            }
+        }
+    }
+    
+
+    async function saveDataFrom(area) {
+        if (area == "todos") {
+            getTodosFromInputs();
+
+            const body = {list: globalList};
+            const bodyJSON = JSON.stringify(body);
+
+            const request = new Request('https://api.npoint.io/09f00b9000d1a3a5902a', {
+                method: 'POST',
+                body: bodyJSON,
+                headers: {'Authorization': 'Bearer PhKqhyh2LEhtBbRPLABwB7pq'}
+            });
+
+            thatFetchStuff(request);
+        } else if (area == "projects") {
+
+        }
+    }
+
+    // saves all data from the app instead of just one area
+    // first, get the data from the html inputs
+    // then, send them as a json object to our storage provider
+    async function saveAll() {
+	
+		// indicate processing of save data ...
+		saveButton = document.getElementById('save-button');
+		saveButton.classList.remove('d-none');
+		saveButton.innerHTML = "..."
+	
+        update();
+
+        const body = {
+            list: globalList,
+            breakdowns: globalBreakdownList,
+            projects: globalProjectList
+        };
+        const bodyJSON = JSON.stringify(body);
+
+        const request = new Request('https://api.npoint.io/09f00b9000d1a3a5902a', {
+            method: 'POST',
+            body: bodyJSON,
+            headers: {'Authorization': 'Bearer PhKqhyh2LEhtBbRPLABwB7pq'}
+        });
+
+        const response = await thatFetchStuff(request);
+		if (response == "result not 200" || response == "connection failed") {
+			saveButton.style.backgroundColor = "red";
+			saveButton.innerHTML = "not saved";
+		} else {
+			saveButton.style.backgroundColor = "green";
+			saveButton.innerHTML = "saved";
+			setTimeout(() => { 
+					saveButton.outerHTML = `
+        <button id="save-button"
+				class="btn btn-lg pt-2 pb-3 px-3 text-white position-fixed d-none"
+                style="
+					background-color: #00000055;
+					backdrop-filter: blur(5px);
+					box-shadow: .1rem .1rem 0.1rem 0px black!important;
+					right: 15px;
+					border-radius: 5px;
+					bottom: 15px;
+					z-index: 9;"
+                onclick="saveAll();">
+							
+			<svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-server" viewBox="0 0 16 16">
+			  <path d="M1.333 2.667C1.333 1.194 4.318 0 8 0s6.667 1.194 6.667 2.667V4c0 1.473-2.985 2.667-6.667 2.667S1.333 5.473 1.333 4V2.667z"/>
+			  <path d="M1.333 6.334v3C1.333 10.805 4.318 12 8 12s6.667-1.194 6.667-2.667V6.334a6.51 6.51 0 0 1-1.458.79C11.81 7.684 9.967 8 8 8c-1.966 0-3.809-.317-5.208-.876a6.508 6.508 0 0 1-1.458-.79z"/>
+			  <path d="M14.667 11.668a6.51 6.51 0 0 1-1.458.789c-1.4.56-3.242.876-5.21.876-1.966 0-3.809-.316-5.208-.876a6.51 6.51 0 0 1-1.458-.79v1.666C1.333 14.806 4.318 16 8 16s6.667-1.194 6.667-2.667v-1.665z"/>
+			</svg>
+				
+		</button>					
+					`; 
+				}, 2000);
+		}
+		
+    }
+
+    // add listener for CTRL+S save shortcut
+    document.addEventListener('keydown', e => {
+        if (e.ctrlKey && e.key === 's') {
+            // Prevent the Save dialog to open
+            e.preventDefault();
+            // Place your code here
+            console.log('CTRL + S');
+            saveAll();
+        }
+    });
+
+    main();
+
+
+
+
+</script>
+
+</html>

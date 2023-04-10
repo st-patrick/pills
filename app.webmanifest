@@ -1,0 +1,8 @@
+{
+  "name": "paper",
+  "short_name": "paper",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "https://paper.patrickreinbold.com",
+  "scope": "https://paper.patrickreinbold.com"
+}
