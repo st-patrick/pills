@@ -130,27 +130,18 @@
 
     <div class="container mt-3 mt-xl-5 mb-5">
         <div class="row">
-            <div class="col-12 offset-md-1 col-md-10 offset-lg-0 col-lg-6 col-xxl-4 offset-xxl-1 mb-3 d-none">
-                <p class="heading">| Projects</p>
-                <div id="project-list" class="mb-2">
-                    <input class="form-control mb-2 project-input" type="text">
-                    <input class="form-control mb-2 project-input" type="text">
-                    <input class="form-control mb-2 project-input" type="text">
-                    <input class="form-control mb-2 project-input" type="text">
-                    <input class="form-control mb-2 project-input" type="text">
-                </div>
-                <div class="mb-2 text-center">
-                    <button class="fw-bold pb-3 border-0 bg-transparent" onclick="addProject();">+ Add Project</button>
-                </div>
-            </div>
+
             <div class="col-12 offset-md-1 col-md-10 offset-lg-0 col-lg-6 col-xxl-4 offset-xxl-4 mb-3">
 				<div class="d-flex justify-content-between">
 					<p class="heading mb-3" contenteditable>| Patrick's List <span class="badge pill">hello there</span></p>
+					
 					<div class="form-check form-switch">
 						  <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" onclick="switchSort();">
 						  <label class="form-check-label" for="flexSwitchCheckDefault">sort by time</label>
 					</div>
 				</div>
+				<input id="search" class="form-control mb-2 todo-input" placeholder="search"/>
+				<br>
                 <div id="list">
                     <div class="form-control mb-2 todo-input" contenteditable></div>
                     <div class="form-control mb-2 todo-input" contenteditable></div>
@@ -162,28 +153,8 @@
                 <div class="mb-2 text-center">
                     <button class="fw-bold pb-3 border-0 bg-transparent mt-1" onclick="addTodo();"><img src="./logo.png" width="45px" /></button>               
                 </div>
-                <br class="d-none d-xxl-block">
-                <div class="d-none text-center fw-bold" id="count" style="color: white;">
-                    0
-                </div>
-                <br class="d-none d-xxl-block">
-                <div class="d-none" id="done">
-                    hwd DONE something...
-                </div>
-                <div class="d-none text-center fw-bold" id="countDone" style="color: white;">
-                    0
-                </div>
             </div>
-            <div class="col-12 offset-md-1 col-md-10 offset-lg-0 col-lg-6 col-xxl-4 mb-3 d-none">
-                <p class="heading">| Breakdown</p>
-                <div id="breakdown-list">
-                    <textarea class="form-control mb-2 breakdown-input" type="text"></textarea>
-                    <textarea class="form-control mb-2 breakdown-input" type="text"></textarea>
-                </div>
-                <div class="mb-2 text-center">
-                    <button class="fw-bold pb-3 border-0 bg-transparent" onclick="addBreakdown();">+ Add Breakdown</button>
-                </div>
-            </div>
+
         </div>
 
 
@@ -219,14 +190,15 @@
 
 <script>
 
+	const endpointUrl = 'https://api.npoint.io/3015b5ccefad4d314b11';
+
 	// TODO
 	// update render method to convert tags into pills
 	// make an "unrender" method to convert pills into tags. I could use an attribute to store the textual value!
 	//		but then when the actual content is edited... with contenteditable.... it still needs to work
+	// rename todos to thoughts
 
     let globalList = [];
-    let globalBreakdownList = [];
-    let globalProjectList = [];
     let globalTodoCount = 0;
     let globalDoneCount = 0;
 	let sortByTime = false;
@@ -260,18 +232,22 @@
 	//templates
 	const todoTemplate = (name = "...", color = randomPopColor(), classes = "") => `
 		<div class="position-relative ${classes}">
-			<div class="form-control mb-2 todo-input" contenteditable spellcheck="false">${name} ${pillTemplate(color)}&nbsp;</div>
-		</div>`;
-		
-	const projectTemplate = (name = "", color = randomPopColor(), classes = "") => `
-		<div class="position-relative ${classes}">
-			<input class=\"form-control mb-2 project-input border-0 ${classes}\" type=\"text\"  value=\"${name}\" >
-			${pillTemplate(color)}
+			<div class="form-control mb-2 todo-input" contenteditable spellcheck="false">${name} &nbsp;</div>
 		</div>`;
 		
 	const pillTemplate = (color = randomPopColor()) => `
 			<span class="badge pill" style="background-color: ` + color + `;">#important</span>
 	`;
+	
+	
+	const searchDOM = document.getElementById('search');
+	searchDOM.addEventListener("keyup", ({key}) => { // lambda & destructuring of key field of event object
+		if (key === "Enter") {
+			filter(searchDOM.value);
+		}
+	})
+	
+	
 		
 	// switch the sorting
 	function switchSort() {
@@ -280,7 +256,7 @@
 	}
 
     async function getJSONdata() {
-        const request = new Request('https://api.npoint.io/09f00b9000d1a3a5902a', {method: 'GET'});
+        const request = new Request(endpointUrl, {method: 'GET'});
 
         return await thatFetchStuff(request);
     }
@@ -312,9 +288,7 @@
 
     async function main() {
         let response = await getJSONdata();
-        globalList = response.list;
-        globalBreakdownList = response.breakdowns;
-        globalProjectList = response.projects;
+        globalList = response.thoughts;
         scoreSortRender(); // because first we have to render only before we can scrape
     }
 	
@@ -327,14 +301,12 @@
         evaluateAll();
         
 		if (sortByTime) {
-		console.log("sorting by time");
+			console.log("sorting by time");
 			globalList = globalList.sort(compareTodoEstimate);
 		} else {
 			console.log("sorting by hwd");
 			globalList = globalList.sort(compareScore);
 		}
-		
-		globalProjectList = globalProjectList.sort(compareScore);
         
         renderAll();
     }
@@ -354,96 +326,50 @@
         listDOM.insertAdjacentHTML('beforeend', content);
     }
 
-    function addBreakdown() {
-        let listDOM = document.getElementById('breakdown-list');
-        let content = `<div class="textarea-highlighter"></div><textarea class=\"form-control mb-2 breakdown-input\" type=\"text\"></textarea>`;
-        listDOM.insertAdjacentHTML('beforeend', content);
-    }
-
-    function addProject() {
-        let listDOM = document.getElementById('project-list');
-        let content = projectTemplate();
-        listDOM.insertAdjacentHTML('beforeend', content);
-    }
-
-
     async function renderTodos(filter = "") {
         let listDOM = document.getElementById('list');
         let listHTML = "";
 
-        let doneDOM = document.getElementById('done');
-        let doneHTML = "";
 		let classes = "";
 
         for(let todo of globalList) {
-
-            if (todo.score < 0) {
-                doneHTML += "<p>" + todo.name + "</p>";
-            } else {
-				classes="";
-				if (filter != "" && !todo.name.includes(filter)) classes = "d-none";
-                listHTML += todoTemplate(todo.name, todo?.color, classes);
-            }
-
-        }
-
-        listDOM.innerHTML = listHTML;
-        doneDOM.innerHTML = doneHTML;
-
-        document.getElementById('count').innerHTML = globalTodoCount;
-        document.getElementById('countDone').innerHTML = globalDoneCount;
-    }
-
-    async function renderProjects(filter = "") {
-        let listDOM = document.getElementById('project-list');
-        let listHTML = "";
-		let classes = "";
-        for(let item of globalProjectList) {
 			classes="";
-			if (filter != "" && !item.name.includes(filter)) classes = "d-none";
-            listHTML += projectTemplate(item.name, item?.color, classes);
+			// if the search / filter string is not empty and not found inside, hide this object via css
+			if (filter != "" && !todo.name.toLowerCase().includes(filter.toLowerCase())) classes = "d-none";
+			listHTML += todoTemplate(todo.name, todo?.color, classes);
         }
+
         listDOM.innerHTML = listHTML;
+
     }
+	
+	// synonymous... basically search for a string in the thoughts
+	function filter (filter = "") {
+		renderAll(filter);
+	}
 
     async function renderAll(filter = "") {
         renderTodos(filter);
-        renderProjects(filter);
-
-        let listDOM = document.getElementById('breakdown-list');
-        let listHTML = "";
-
-        for(let breakdown of globalBreakdownList) {
-            listHTML += `<div class="textarea-highlighter" style="background: #`+ randomColor() +`;"></div><textarea class=\"form-control mb-2 breakdown-input\" type=\"text\">` + breakdown + `</textarea>`;
-        }
-
-        listDOM.innerHTML = listHTML;
     }
 	
 	/*
-	 * next evolutionary step to scoreTodos. evaluate all entities (projects, todos, ...) inside the current window
+	 * next evolutionary step to score
 	 * 
 	 */
 	function evaluateAll() {
 		scoreTodos();
 		calcTodoTime();
-		
-		scoreProjects();
-		
-		// applies to both projects and todos
-		getColors();
 	}
 	
 	/*
      * newer feature: allow custom colors in order to show belonging to here or there
+	 * UNUSED as of now
      */
-    function getColors() {
-        for(let todo of globalList) { extractColorFromName(todo); }
-		for(let project of globalProjectList) { extractColorFromName(project); }
+    function getPills() {
+        for(let todo of globalList) { extractPillFromName(todo); }
     }
-	
 	// helper function getting colors
-	function extractColorFromName(item) {
+	function extractPillFromName(item) {
 		let colorIndex, color;
 		colorIndex = item.name.indexOf("#");
 		if(colorIndex > -1) {
@@ -514,7 +440,6 @@
         globalTodoCount = 0;
 
         for(let todo of globalList) {
-
             if(todo.name.includes("DONE")) {
                 todo.score = -1;
                 globalDoneCount++;
@@ -525,14 +450,6 @@
         }
     }
 	
-	/*
-     * assigns each project a score based on the first letters code
-     */
-    function scoreProjects() {
-        for(let project of globalProjectList) {
-			scoreItem(project);
-        }
-    }
 	
 	/*
 	 * helper to score any item with hwd code inside tring attribute "name"
@@ -565,7 +482,6 @@
 
     function getTodosFromInputs() {
         const todoInputs = document.getElementsByClassName("todo-input");
-        const dones = document.getElementById("done").getElementsByTagName("p");
         globalList = [];
         for(let todo of todoInputs) {
             if(todo.innerHTML.trim() != "") {
@@ -573,34 +489,11 @@
                 globalList.push({name: todo.innerHTML});
             }
         }
-        for(let done of dones) {
-            if(done.innerHTML != "") {
-                globalList.push({name: done.innerHTML});
-            }
-        }
     }
 
-    function getProjectsFromInputs() {
-        const inputs = document.getElementsByClassName("project-input");
-        globalProjectList = [];
-        for(let input of inputs) {
-            if(input.value != "") {
-                globalProjectList.push({name: input.value});
-            }
-        }
-    }
 
     function scrapeData() {
         getTodosFromInputs();
-		getProjectsFromInputs();
-
-        const breakdowns = document.getElementsByClassName("breakdown-input");
-        globalBreakdownList = [];
-        for(let breakdown of breakdowns) {
-            if(breakdown.value != "") {
-                globalBreakdownList.push(breakdown.value);
-            }
-        }
     }
     
 
@@ -611,15 +504,13 @@
             const body = {list: globalList};
             const bodyJSON = JSON.stringify(body);
 
-            const request = new Request('https://api.npoint.io/09f00b9000d1a3a5902a', {
+            const request = new Request(endpointUrl, {
                 method: 'POST',
                 body: bodyJSON,
                 headers: {'Authorization': 'Bearer PhKqhyh2LEhtBbRPLABwB7pq'}
             });
 
             thatFetchStuff(request);
-        } else if (area == "projects") {
-
         }
     }
 
@@ -631,18 +522,15 @@
 		// indicate processing of save data ...
 		saveButton = document.getElementById('save-button');
 		saveButton.classList.remove('d-none');
-		saveButton.innerHTML = "..."
 	
         update();
 
         const body = {
-            list: globalList,
-            breakdowns: globalBreakdownList,
-            projects: globalProjectList
+            thoughts: globalList,
         };
         const bodyJSON = JSON.stringify(body);
 
-        const request = new Request('https://api.npoint.io/09f00b9000d1a3a5902a', {
+        const request = new Request(endpointUrl, {
             method: 'POST',
             body: bodyJSON,
             headers: {'Authorization': 'Bearer PhKqhyh2LEhtBbRPLABwB7pq'}
@@ -656,27 +544,8 @@
 			saveButton.style.backgroundColor = "green";
 			saveButton.innerHTML = "saved";
 			setTimeout(() => { 
-					saveButton.outerHTML = `
-        <button id="save-button"
-				class="btn btn-lg pt-2 pb-3 px-3 text-white position-fixed d-none"
-                style="
-					background-color: #00000055;
-					backdrop-filter: blur(5px);
-					box-shadow: .1rem .1rem 0.1rem 0px black!important;
-					right: 15px;
-					border-radius: 5px;
-					bottom: 15px;
-					z-index: 9;"
-                onclick="saveAll();">
-							
-			<svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-server" viewBox="0 0 16 16">
-			  <path d="M1.333 2.667C1.333 1.194 4.318 0 8 0s6.667 1.194 6.667 2.667V4c0 1.473-2.985 2.667-6.667 2.667S1.333 5.473 1.333 4V2.667z"/>
-			  <path d="M1.333 6.334v3C1.333 10.805 4.318 12 8 12s6.667-1.194 6.667-2.667V6.334a6.51 6.51 0 0 1-1.458.79C11.81 7.684 9.967 8 8 8c-1.966 0-3.809-.317-5.208-.876a6.508 6.508 0 0 1-1.458-.79z"/>
-			  <path d="M14.667 11.668a6.51 6.51 0 0 1-1.458.789c-1.4.56-3.242.876-5.21.876-1.966 0-3.809-.316-5.208-.876a6.51 6.51 0 0 1-1.458-.79v1.666C1.333 14.806 4.318 16 8 16s6.667-1.194 6.667-2.667v-1.665z"/>
-			</svg>
-				
-		</button>					
-					`; 
+				saveButton.classList.add('d-none');
+				saveButton.innerHTML = "..."	 
 				}, 2000);
 		}
 		
