@@ -8,9 +8,9 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
 
-    <meta name="theme-color" content="lightgoldenrodyellow">
-    <meta name="theme-color" content="lightgoldenrodyellow" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="lightgoldenrodyellow" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="white">
+    <meta name="theme-color" content="white" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="white" media="(prefers-color-scheme: dark)">
 	
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
 	<meta name="viewport" content="minimal-ui">
@@ -34,7 +34,7 @@
 			--input-padding: .7rem 1rem .8rem 1rem;
 			--input-background: #fafafa;
 			--input-weight: 490;
-			--input-size: 0.85rem;
+			--input-size: 1rem;
 			--input-color: black;
 			--background: white;
 		}
@@ -122,7 +122,7 @@
 
     </style>
 
-    <title>ToolDo</title>
+    <title>Pills</title>
 </head>
 <body style="background: var(--background);">
 
@@ -133,14 +133,23 @@
 
             <div class="col-12 offset-md-1 col-md-10 offset-lg-0 col-lg-6 col-xxl-4 offset-xxl-4 mb-3">
 				<div class="d-flex justify-content-between">
-					<p class="heading mb-3" contenteditable>| Patrick's List <span class="badge pill">hello there</span></p>
+					<p class="heading mb-3">| Pills &nbsp;
+						<button class="badge pill" onclick="showAll();">show all</button></p>
 					
+					<!--
 					<div class="form-check form-switch">
 						  <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" onclick="switchSort();">
 						  <label class="form-check-label" for="flexSwitchCheckDefault">sort by time</label>
 					</div>
+					-->
 				</div>
 				<input id="search" class="form-control mb-2 todo-input" placeholder="search"/>
+				<button class="badge pill" onclick="savedFilter(this);">#todo</button>
+				<button class="badge pill" onclick="savedFilter(this);">#pills</button>
+				<button class="badge pill" onclick="savedFilter(this);">#dream</button>
+				<button class="badge pill" onclick="savedFilter(this);">hello there</button>
+				<br>
+				<br>
 				<br>
                 <div id="list">
                     <div class="form-control mb-2 todo-input" contenteditable></div>
@@ -196,7 +205,37 @@
 	// update render method to convert tags into pills
 	// make an "unrender" method to convert pills into tags. I could use an attribute to store the textual value!
 	//		but then when the actual content is edited... with contenteditable.... it still needs to work
+	// no way too complicated. Just have one version "rendered" and when you focus on an input, it will turn into 
+	//		normal text, so hide the rendered version. When you unfocus, rerender and hide the text-only
+	
 	// rename todos to thoughts
+	// HOWEVER now  we have a problem: how to implement sorting in a comfy, quick way?
+	// 		that was kind of the whole point of hwd todo
+	// and obviously render the infamous pills
+	
+	// not sure if I like the status bar not showing in this one... seems like it would annoy most people
+	// entering my first todo, something annoying already comes up: having to enter #todo 
+	//		it would be nicer to just have a "todo area" to enter them but ok... let's play along
+	
+	// enable simple markdown and lists like google keep with the plus and others
+	// little X next to the search to restore full view of all thoughts
+	
+	// ok this is awesome for now but yes, I need some way of sorting 
+	// and also, adding trivial tags like #shoppinglist I could imagine being annoying
+	//		more annoying than just swiping into another app real quick
+	
+	// now obviously, the most sensible feature would be to have suggested / recent filters all the way at the top
+
+	// what if I want to search all the todos and all the projects and combine them?
+	// what if I want to only show ones that are both #todo and #pill?
+	// what if I only want to show ones that only have #todo and no other tags / pills?
+	
+	// this will quickly get out of hand... like I can only see so many thoughts at once, how will
+	//		they ever make sense together?
+	
+	// obviously allow people to see a list of all the tags they made and maybe also with a count how many belong to it
+	
+	
 
     let globalList = [];
     let globalTodoCount = 0;
@@ -230,9 +269,9 @@
 	
 
 	//templates
-	const todoTemplate = (name = "...", color = randomPopColor(), classes = "") => `
+	const todoTemplate = (name = "", color = randomPopColor(), classes = "") => `
 		<div class="position-relative ${classes}">
-			<div class="form-control mb-2 todo-input" contenteditable spellcheck="false">${name} &nbsp;</div>
+			<div class="form-control mb-2 todo-input" contenteditable spellcheck="false">${name}</div>
 		</div>`;
 		
 	const pillTemplate = (color = randomPopColor()) => `
@@ -327,6 +366,7 @@
     }
 
     async function renderTodos(filter = "") {
+	
         let listDOM = document.getElementById('list');
         let listHTML = "";
 
@@ -343,8 +383,20 @@
 
     }
 	
+	function showAll() {
+		searchDOM.value = "";
+		renderAll("");
+	}
+	
+	function savedFilter(clickedOnElement) {
+		const searchterm = clickedOnElement.innerHTML;
+		searchDOM.value = searchterm;
+		renderAll(searchterm);
+	}
+	
 	// synonymous... basically search for a string in the thoughts
 	function filter (filter = "") {
+		saveAll(); // include newly added text, so we might as well save?
 		renderAll(filter);
 	}
 

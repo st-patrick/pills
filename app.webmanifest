@@ -1,8 +1,8 @@
 {
-  "name": "paper",
-  "short_name": "paper",
+  "name": "pills",
+  "short_name": "pills",
   "display": "standalone",
   "orientation": "portrait",
-  "start_url": "https://paper.patrickreinbold.com",
-  "scope": "https://paper.patrickreinbold.com"
+  "start_url": "https://pills.patrickreinbold.com",
+  "scope": "https://pills.patrickreinbold.com"
 }
