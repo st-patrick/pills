@@ -147,10 +147,17 @@
 				<button class="badge pill" onclick="savedFilter(this);">#todo</button>
 				<button class="badge pill" onclick="savedFilter(this);">#pills</button>
 				<button class="badge pill" onclick="savedFilter(this);">#dream</button>
-				<button class="badge pill" onclick="savedFilter(this);">hello there</button>
+				<button class="badge pill" onclick="savedFilter(this);">#fundev</button>
+				<button class="badge pill" onclick="savedFilter(this);">#shop</button>
+				<button class="badge pill" onclick="savedFilter(this);">#dev</button>
+				<button class="badge pill" onclick="savedFilter(this);">#calendar</button>
+				<button class="badge pill" onclick="savedFilter(this);">#gym</button>
 				<br>
 				<br>
 				<br>
+				<div class="mb-2 text-center">
+                    <button class="fw-bold pb-3 border-0 bg-transparent mt-1" onclick="addTodo();"><img src="./logo.png" width="45px" /></button>               
+                </div>
                 <div id="list">
                     <div class="form-control mb-2 todo-input" contenteditable></div>
                     <div class="form-control mb-2 todo-input" contenteditable></div>
@@ -159,9 +166,7 @@
                     <div class="form-control mb-2 todo-input" contenteditable></div>
                     <div class="form-control mb-2 todo-input" contenteditable></div>
                 </div>
-                <div class="mb-2 text-center">
-                    <button class="fw-bold pb-3 border-0 bg-transparent mt-1" onclick="addTodo();"><img src="./logo.png" width="45px" /></button>               
-                </div>
+
             </div>
 
         </div>
@@ -235,11 +240,15 @@
 	
 	// obviously allow people to see a list of all the tags they made and maybe also with a count how many belong to it
 	
+	// ok, now when using calendar, I need a way to see the date and then sort by date.
+	// for now, my own format will do: YYYYMMDDHHMM ... take a regex, take them out and use them for sorting
+	
+	// another UX thing: when you search for a tag, you can hide that tag in the 
+	
 	
 
     let globalList = [];
     let globalTodoCount = 0;
-    let globalDoneCount = 0;
 	let sortByTime = false;
 	
 	// other helpers
@@ -328,27 +337,13 @@
     async function main() {
         let response = await getJSONdata();
         globalList = response.thoughts;
-        scoreSortRender(); // because first we have to render only before we can scrape
+        renderAll(); // because first we have to render only before we can scrape
     }
 	
 	function update() {
 		scrapeData();
-		scoreSortRender();
+		renderAll();
 	}
-
-    function scoreSortRender(){
-        evaluateAll();
-        
-		if (sortByTime) {
-			console.log("sorting by time");
-			globalList = globalList.sort(compareTodoEstimate);
-		} else {
-			console.log("sorting by hwd");
-			globalList = globalList.sort(compareScore);
-		}
-        
-        renderAll();
-    }
 
     /* was not really necessary, we now work with the globallist object
     function convertToOnlyNames(objectList) {
@@ -362,13 +357,17 @@
     function addTodo(){
         let listDOM = document.getElementById('list');
         let content = todoTemplate();
-        listDOM.insertAdjacentHTML('beforeend', content);
+        listDOM.insertAdjacentHTML('afterBegin', content);
     }
 
     async function renderTodos(filter = "") {
 	
         let listDOM = document.getElementById('list');
         let listHTML = "";
+		
+		if (filter == "") {
+			if (searchDOM.value.trim() != "") filter = searchDOM.value.trim(); // either this or some global var here
+		}
 
 		let classes = "";
 
@@ -403,15 +402,6 @@
     async function renderAll(filter = "") {
         renderTodos(filter);
     }
-	
-	/*
-	 * next evolutionary step to score
-	 * 
-	 */
-	function evaluateAll() {
-		scoreTodos();
-		calcTodoTime();
-	}
 	
 	/*
      * newer feature: allow custom colors in order to show belonging to here or there
@@ -481,26 +471,7 @@
 
         }
     }
-	
-	
-    /*
-     * assigns each ToDo a score based on the first letters code
-     */
-    function scoreTodos() {
 
-        globalDoneCount = 0;
-        globalTodoCount = 0;
-
-        for(let todo of globalList) {
-            if(todo.name.includes("DONE")) {
-                todo.score = -1;
-                globalDoneCount++;
-            } else {
-                scoreItem(todo);
-                globalTodoCount++;
-            }
-        }
-    }
 	
 	
 	/*
@@ -547,24 +518,7 @@
     function scrapeData() {
         getTodosFromInputs();
     }
-    
-
-    async function saveDataFrom(area) {
-        if (area == "todos") {
-            getTodosFromInputs();
-
-            const body = {list: globalList};
-            const bodyJSON = JSON.stringify(body);
-
-            const request = new Request(endpointUrl, {
-                method: 'POST',
-                body: bodyJSON,
-                headers: {'Authorization': 'Bearer PhKqhyh2LEhtBbRPLABwB7pq'}
-            });
-
-            thatFetchStuff(request);
-        }
-    }
+   
 
     // saves all data from the app instead of just one area
     // first, get the data from the html inputs
@@ -597,7 +551,8 @@
 			saveButton.innerHTML = "saved";
 			setTimeout(() => { 
 				saveButton.classList.add('d-none');
-				saveButton.innerHTML = "..."	 
+				saveButton.innerHTML = "..."
+				saveButton.style.backgroundColor = "gray";				
 				}, 2000);
 		}
 		
