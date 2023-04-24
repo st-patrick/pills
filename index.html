@@ -18,6 +18,8 @@
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
 	<meta name="mobile-web-app-capable" content="yes">
 	<link rel="manifest" href="/app.webmanifest">
+	
+	<link rel="icon" type="image/x-icon" href="logo.png">
 
     <style>
 		:root {
@@ -134,7 +136,9 @@
             <div class="col-12 offset-md-1 col-md-10 offset-lg-0 col-lg-6 col-xxl-4 offset-xxl-4 mb-3">
 				<div class="d-flex justify-content-between">
 					<p class="heading mb-3">| Pills &nbsp;
-						<button class="badge pill" onclick="showAll();">show all</button></p>
+						<button class="badge pill" onclick="showAll();">show all</button>
+						<button class="badge pill" onclick="saveAll();">save</button>
+					</p>
 					
 					<!--
 					<div class="form-check form-switch">
@@ -144,14 +148,17 @@
 					-->
 				</div>
 				<input id="search" class="form-control mb-2 todo-input" placeholder="search"/>
-				<button class="badge pill" onclick="savedFilter(this);">#todo</button>
-				<button class="badge pill" onclick="savedFilter(this);">#pills</button>
-				<button class="badge pill" onclick="savedFilter(this);">#dream</button>
-				<button class="badge pill" onclick="savedFilter(this);">#fundev</button>
-				<button class="badge pill" onclick="savedFilter(this);">#shop</button>
-				<button class="badge pill" onclick="savedFilter(this);">#dev</button>
-				<button class="badge pill" onclick="savedFilter(this);">#calendar</button>
-				<button class="badge pill" onclick="savedFilter(this);">#gym</button>
+				<div id="suggestions">
+					<button class="badge pill" onclick="savedFilter(this);">#todo</button>
+					<button class="badge pill" onclick="savedFilter(this);">#pills</button>
+					<button class="badge pill" onclick="savedFilter(this);">#dream</button>
+					<button class="badge pill" onclick="savedFilter(this);">#fundev</button>
+					<button class="badge pill" onclick="savedFilter(this);">#shop</button>
+					<button class="badge pill" onclick="savedFilter(this);">#dev</button>
+					<button class="badge pill" onclick="savedFilter(this);">#calendar</button>
+					<button class="badge pill" onclick="savedFilter(this);">#gym</button>
+					<button class="badge pill" onclick="savedFilter(this);">#startup</button>
+				</div>
 				<br>
 				<br>
 				<br>
@@ -250,6 +257,7 @@
     let globalList = [];
     let globalTodoCount = 0;
 	let sortByTime = false;
+
 	
 	// other helpers
 	
@@ -286,6 +294,18 @@
 	const pillTemplate = (color = randomPopColor()) => `
 			<span class="badge pill" style="background-color: ` + color + `;">#important</span>
 	`;
+	
+	
+	let suggestions = ["todo", "pills", "dream", "fundev", "shop", "dev", "calendar", "gym", "startup"];
+	let suggestionsDOM = document.getElementById('suggestions');	
+	const suggestionTemplate = (suggestion = "", color = randomPopColor()) => `
+		<button class="badge pill" onclick="savedFilter(this);" style="background-color: ` + color + `;">#${suggestion}</button>`;
+	// propagate suggestions
+	let suggestionsInnerHTML = "";
+	for(let i = 0; i < suggestions.length; i++) {
+		suggestionsInnerHTML += suggestionTemplate(suggestions[i]);
+	}
+	suggestionsDOM.innerHTML = suggestionsInnerHTML;
 	
 	
 	const searchDOM = document.getElementById('search');
@@ -395,7 +415,6 @@
 	
 	// synonymous... basically search for a string in the thoughts
 	function filter (filter = "") {
-		saveAll(); // include newly added text, so we might as well save?
 		renderAll(filter);
 	}
 
