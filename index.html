@@ -132,8 +132,8 @@
 
     <div class="container mt-3 mt-xl-5 mb-5">
         <div class="row">
-
-            <div class="col-12 offset-md-1 col-md-10 offset-lg-0 col-lg-6 col-xxl-4 offset-xxl-4 mb-3">
+			<div class="col"></div>
+            <div class="col-12 col-md-10 col-lg-8 col-xl-6 col-xxl-5 mb-3">
 				<div class="d-flex justify-content-between">
 					<p class="heading mb-3">| Pills &nbsp;
 						<button class="badge pill" onclick="showAll();">show all</button>
@@ -175,7 +175,7 @@
                 </div>
 
             </div>
-
+			<div class="col"></div>
         </div>
 
 
@@ -212,6 +212,7 @@
 <script>
 
 	const endpointUrl = 'https://api.npoint.io/3015b5ccefad4d314b11';
+	const SUGGESTIONS_AMOUNT = 20;
 
 	// TODO
 	// update render method to convert tags into pills
@@ -256,7 +257,7 @@
 
     let globalList = [];
     let globalTodoCount = 0;
-	let sortByTime = false;
+	let tagCounts = {};
 
 	
 	// other helpers
@@ -299,13 +300,16 @@
 	let suggestions = ["todo", "pills", "dream", "fundev", "shop", "dev", "calendar", "gym", "startup"];
 	let suggestionsDOM = document.getElementById('suggestions');	
 	const suggestionTemplate = (suggestion = "", color = randomPopColor()) => `
-		<button class="badge pill" onclick="savedFilter(this);" style="background-color: ` + color + `;">#${suggestion}</button>`;
+		<button class="badge pill" onclick="savedFilter(this);" style="background-color: ` + color + `;">#${suggestion} (${tagCounts[suggestion]})</button>`;
+
 	// propagate suggestions
-	let suggestionsInnerHTML = "";
-	for(let i = 0; i < suggestions.length; i++) {
-		suggestionsInnerHTML += suggestionTemplate(suggestions[i]);
+	function renderSuggestions(){
+		let suggestionsInnerHTML = "";
+		for(let i = 0; i < suggestions.length; i++) {
+			suggestionsInnerHTML += suggestionTemplate(suggestions[i]);
+		}
+		suggestionsDOM.innerHTML = suggestionsInnerHTML;		
 	}
-	suggestionsDOM.innerHTML = suggestionsInnerHTML;
 	
 	
 	const searchDOM = document.getElementById('search');
@@ -354,11 +358,88 @@
         return responseObject;
     }
 
+	/* main function as in this runs when the site opens / reloads
+	 * 
+	 */
     async function main() {
         let response = await getJSONdata();
         globalList = response.thoughts;
         renderAll(); // because first we have to render only before we can scrape
+		evaluateAll();
     }
+	
+	/* get everything together and...
+	 * count which tags used how often
+	 * count notes with no tags
+	 * other insights...
+	 *		which notes are hardly looked at
+	 
+	 * TODO update tag counts and other meta stuff while using app not just on load
+	 */
+	function evaluateAll() {
+		for(let i = 0; i < globalList.length; i++){
+			updateGlobalTagCountWith(globalList[i].name);
+		}
+		
+		// sort object by value 
+		// some black magic from stackoverflow https://stackoverflow.com/questions/1069666/sorting-object-property-by-values
+		// it would be more efficient to just use a max algo instead of sorting but it's fine
+		tagCounts = Object.fromEntries(
+			Object.entries(tagCounts).sort(([,a],[,b]) => b-a)
+		);
+		
+		// update suggestions
+		suggestions = [];
+		let count = 0;
+		for (let tag in tagCounts) {
+			suggestions.push(tag);
+			count++;
+			if(count>= SUGGESTIONS_AMOUNT) {
+				break;
+			}
+		}
+		renderSuggestions();
+	}
+	
+	/* extract tags from string
+	 * feeding directly into global object. Not sure if that's good but for now ok. TODO maybe
+	 */
+	function updateGlobalTagCountWith(string) {
+		let ongoing = false;
+		let tag = ""
+		
+		for(let i = 0; i<string.length; i++){
+			if(string[i] == '#') {
+				ongoing = true;
+				i++; // TODO this technically will kind of crash when # is at end of string / name
+			}
+			if(ongoing){
+				if( !isAlphaNumeric(string[i]) ){ // tags are only supposed to contain alphanumeric chars
+					ongoing = false;
+					tagCounts[tag] = tag in tagCounts ? tagCounts[tag] + 1 : 1;
+					tag = "";
+				} else {
+					tag += string[i];
+				}
+			}
+		}
+		
+		// recognize when tag is at end of string
+		if(ongoing){
+			tagCounts[tag] = tag in tagCounts ? tagCounts[tag] + 1 : 1;
+		}		
+		
+	}
+	
+	function isAlphaNumeric(c) {
+		code = c.charCodeAt(0);
+		if (!(code > 47 && code < 58) && // numeric (0-9)
+			!(code > 64 && code < 91) && // upper alpha (A-Z)
+			!(code > 96 && code < 123)) { // lower alpha (a-z)
+		  return false;
+		}
+		return true;
+	}
 	
 	function update() {
 		scrapeData();
@@ -438,59 +519,6 @@
 			item.color = color;
 		} 
 	}
-	
-
-    /*
-     * assigns each ToDo a value in minutes based on the string after the priority describing the timeframe
-	 * e.g. 30m, 2h, 1-2h, ...
-     */
-    function calcTodoTime() {
-	
-		// get second word from name
-		// check if that word ends with m, h, d, w or m
-		// check if it starts with a number
-		// calculate the number of minutes contained in that expression
-		// if it fails at any point, just assign INTEGER MAX, so basically don't assign any time
-
-		// the conversion factors weeks, days, ...
-		// TODO really the greater units should build on smaller units, so w = 5d, m = 4w etc...
-        const factors = {
-			"m": 1,
-			"h": 60,
-			"d": 480, // now here's the tricky part, a day isn't 24 hours but more like a work day, so 8 hours
-			"w": 2400, // same as above, let's assume a fulltime work schedule
-			// and I guess months don't exist for now? but they should, for projects and what not
-		}
-		
-		
-
-        for(let todo of globalList) {
-		
-			try {
-			
-				const timeString = todo.name.split(' ')[1];
-				// at this point, we could have a time estimate at words[1] or nothing / a letter / a word
-				
-				const factor = factors[timeString.slice(-1)];
-				
-				let amount = timeString.slice(0,-1);
-				
-				// if it's a ballpark, then just make a middle average out of it
-				if (amount.includes("-")) {
-					const extremes = amount.split('-');
-					amount = (parseInt(extremes[1]) + parseInt(extremes[0])) / 2;
-				} 
-				
-				todo.estimate = amount * factor;
-			
-			
-			} catch (error) {
-				todo.estimate = Number.MAX_SAFE_INTEGER;
-			}
-
-        }
-    }
-
 	
 	
 	/*
