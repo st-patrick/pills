@@ -40,16 +40,6 @@
 			--input-color: black;
 			--background: white;
 		}
-	
-		body::-webkit-scrollbar{
-			display: none;
-		}
-		textarea::-webkit-scrollbar{
-			display: none;
-		}
-	
-        .todo-input {
-        }
 
         .btn-primary {
             background-color: #b1c9fe;
@@ -67,10 +57,7 @@
             width: 100vw;
         }
 
-        textarea {
-            height: 200px;
-        }
-		
+
 		.form-control {
 			padding: var(--input-padding);
 			font-size: var(--input-size);
@@ -82,32 +69,22 @@
 			transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 
 			box-shadow: 0 0 0 0.03rem gray;
-		}
-		
-		.heading {
-			font-weight: bold;
-		}
-		
-		.textarea-highlighter {
-			height: 33px;
-			background: red;
-			z-index: 99999999;
-			margin-bottom: -33px;
-			position: relative;
-			mix-blend-mode: plus-lighter;
-		}
-		
-		.project-highlighter {
-			height: 44px;
-			position: absolute;
-			width: 44px;
-			background: red;
-			mix-blend-mode: color;
+			
+			max-height: 50vh;
+			overflow-y: scroll;			
 		}
 		
 		.form-control:focus {
 			border-color: black;
-			box-shadow: 0 0 0 0.2rem black;
+			box-shadow: 0 0 0 0.2rem black;		
+		}
+		
+		.form-control:not(:focus) {
+			-ms-overflow-style: none;  /* Internet Explorer 10+ */
+			scrollbar-width: none;  /* Firefox */			
+		}
+		.form-control::-webkit-scrollbar:not(:focus) { 
+			display: none;  /* Safari and Chrome */
 		}
 		
 		.pill {
@@ -135,7 +112,7 @@
 			<div class="col"></div>
             <div class="col-12 col-md-10 col-lg-8 col-xl-6 col-xxl-5 mb-3">
 				<div class="d-flex justify-content-between">
-					<p class="heading mb-3">| Pills &nbsp;
+					<p class="fw-bold mb-3 ">| Pills &nbsp;
 						<button class="badge pill" onclick="showAll();">show all</button>
 						<button class="badge pill" onclick="saveAll();">save</button>
 					</p>
@@ -149,15 +126,6 @@
 				</div>
 				<input id="search" class="form-control mb-2 todo-input" placeholder="search"/>
 				<div id="suggestions">
-					<button class="badge pill" onclick="savedFilter(this);">#todo</button>
-					<button class="badge pill" onclick="savedFilter(this);">#pills</button>
-					<button class="badge pill" onclick="savedFilter(this);">#dream</button>
-					<button class="badge pill" onclick="savedFilter(this);">#fundev</button>
-					<button class="badge pill" onclick="savedFilter(this);">#shop</button>
-					<button class="badge pill" onclick="savedFilter(this);">#dev</button>
-					<button class="badge pill" onclick="savedFilter(this);">#calendar</button>
-					<button class="badge pill" onclick="savedFilter(this);">#gym</button>
-					<button class="badge pill" onclick="savedFilter(this);">#startup</button>
 				</div>
 				<br>
 				<br>
@@ -214,12 +182,13 @@
 	const endpointUrl = 'https://api.npoint.io/3015b5ccefad4d314b11';
 	const SUGGESTIONS_AMOUNT = 20;
 
-	// TODO
+	// TODOs
 	// update render method to convert tags into pills
 	// make an "unrender" method to convert pills into tags. I could use an attribute to store the textual value!
 	//		but then when the actual content is edited... with contenteditable.... it still needs to work
 	// no way too complicated. Just have one version "rendered" and when you focus on an input, it will turn into 
 	//		normal text, so hide the rendered version. When you unfocus, rerender and hide the text-only
+	// suggest tags to merge (like "reminder" and "reminders")
 	
 	// rename todos to thoughts
 	// HOWEVER now  we have a problem: how to implement sorting in a comfy, quick way?
@@ -300,7 +269,7 @@
 	let suggestions = ["todo", "pills", "dream", "fundev", "shop", "dev", "calendar", "gym", "startup"];
 	let suggestionsDOM = document.getElementById('suggestions');	
 	const suggestionTemplate = (suggestion = "", color = randomPopColor()) => `
-		<button class="badge pill" onclick="savedFilter(this);" style="background-color: ` + color + `;">#${suggestion} (${tagCounts[suggestion]})</button>`;
+		<button class="badge pill" onclick="suggestionClick('#${suggestion}');" style="background-color: ` + color + `;">#${suggestion} (${tagCounts[suggestion]})</button>`;
 
 	// propagate suggestions
 	function renderSuggestions(){
@@ -488,15 +457,14 @@
 		renderAll("");
 	}
 	
-	function savedFilter(clickedOnElement) {
-		const searchterm = clickedOnElement.innerHTML;
-		searchDOM.value = searchterm;
-		renderAll(searchterm);
-	}
-	
 	// synonymous... basically search for a string in the thoughts
 	function filter (filter = "") {
 		renderAll(filter);
+	}
+	
+	function suggestionClick(tag) {
+		searchDOM.value = tag;
+		filter(tag);
 	}
 
     async function renderAll(filter = "") {
