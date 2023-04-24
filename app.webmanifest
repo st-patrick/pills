@@ -1,8 +1,18 @@
 {
-  "name": "pills",
-  "short_name": "pills",
-  "display": "standalone",
-  "orientation": "portrait",
-  "start_url": "https://pills.patrickreinbold.com",
-  "scope": "https://pills.patrickreinbold.com"
+	"name": "pills",
+	"short_name": "pills",
+	"start_url":"index.html",	
+	"display": "standalone",
+	"background_color":"#ffffff",
+	"theme_color":"white",
+	"orientation": "portrait",
+	"scope": ".",
+	"description":"stream of consciousness",
+	"icons":[
+	{
+	"src":"./logo.png",
+	"sizes":"360x360",
+	"type":"image/png"
+	}
+]
 }

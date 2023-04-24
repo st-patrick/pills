@@ -4,10 +4,7 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
-
+	
     <meta name="theme-color" content="white">
     <meta name="theme-color" content="white" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="white" media="(prefers-color-scheme: dark)">
@@ -16,10 +13,13 @@
 	<meta name="viewport" content="minimal-ui">
 	<meta name="viewport" content="initial-scale=1"> 
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
-	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="mobile-web-app-capable" content="yes">	
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
 	<link rel="manifest" href="/app.webmanifest">
-	
 	<link rel="icon" type="image/x-icon" href="logo.png">
+
 
     <style>
 		:root {
@@ -181,6 +181,26 @@
 
 	const endpointUrl = 'https://api.npoint.io/3015b5ccefad4d314b11';
 	const SUGGESTIONS_AMOUNT = 20;
+	
+	// generic sw
+	window.addEventListener('load', () => {
+	registerSW();
+	});
+	// Register the Service Worker
+	async function registerSW() {
+	if ('serviceWorker' in navigator) {
+		try {
+		await navigator
+				.serviceWorker
+				.register('./sw.js');
+		}
+		catch (e) {
+		console.log('SW registration failed');
+		}
+	}
+	}		
+	
+	
 
 	// TODOs
 	// update render method to convert tags into pills
